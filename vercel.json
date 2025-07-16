@@ -1,5 +1,7 @@
 {
-  "eslint": {
-    "ignoreDuringBuilds": true
+  "build": {
+    "env": {
+      "NEXT_IGNORE_ESLINT": "true"
+    }
   }
 }
