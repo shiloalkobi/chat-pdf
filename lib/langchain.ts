@@ -112,6 +112,9 @@ const qaPrompt = ChatPromptTemplate.fromMessages([
     2. Explain what specific information would be needed
     3. Suggest how the question might be refined
 
+    LANGUAGE RULE:
+    Always respond in the **same language** as the question. If the question is in Hebrew, respond fluently in Hebrew. If in English – respond in English.
+
     Context: {context}`,
   ],
   ["human", "Question: {question}"],
