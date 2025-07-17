@@ -23,6 +23,9 @@ export async function processUserMessage({
   model,
 }: ProcessMessageArgs) {
   try {
+    // 🔤 שלב 1: זיהוי שפה
+    const isHebrew = /[\u0590-\u05FF]/.test(userPrompt);
+
     // Create non-streaming model for inquiry generation
     const nonStreamingModel = new ChatOpenAI({
       modelName: "gpt-3.5-turbo",
@@ -41,7 +44,14 @@ export async function processUserMessage({
 
     // Get relevant documents
     const relevantDocs = await vectorStore.similaritySearch(inquiryResult, 3);
-    const context = relevantDocs.map((doc) => doc.pageContent).join("\n\n");
+
+    // 📝 שלב 3: הוספת הנחיה לשפה לתוך הקונטקסט
+    const languageNotice = isHebrew
+      ? "שים לב: השאלה שנשאלה בעברית, לכן יש להשיב בעברית בלבד.\n\n"
+      : "Note: The question was asked in English. Respond only in English.\n\n";
+
+    const context =
+      languageNotice + relevantDocs.map((doc) => doc.pageContent).join("\n\n");
 
     // Generate answer using streaming model
     // const answer = await qaPrompt
