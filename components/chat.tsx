@@ -17,10 +17,9 @@ export function Chat() {
     useChat({
       api: "/api/chat",
       initialMessages,
-      body: (messages: Message[]) => ({
-        messages,
+      body: {
         mode: "personal", // ✅ זה מה שמפעיל את הסוכן האישי בצד שרת
-      }),
+      },
     });
 
   useEffect(() => {
