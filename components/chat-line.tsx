@@ -53,7 +53,10 @@ export function ChatLine({
             {role == "assistant" ? "AI" : "You"}
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-sm">
+        <CardContent
+          dir="rtl"
+          className="text-sm text-right leading-relaxed whitespace-pre-line"
+        >
           <Balancer>{formattedMessage}</Balancer>
         </CardContent>
         <CardFooter>
@@ -63,7 +66,7 @@ export function ChatLine({
                 {sources.map((source, index) => (
                   <AccordionItem value={`source-${index}`} key={index}>
                     <AccordionTrigger>{`Source ${index + 1}`}</AccordionTrigger>
-                    <AccordionContent>
+                    <AccordionContent dir="rtl">
                       <ReactMarkdown>{formattedText(source)}</ReactMarkdown>
                     </AccordionContent>
                   </AccordionItem>

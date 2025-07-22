@@ -15,7 +15,12 @@ export function Chat() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { messages, input, handleInputChange, handleSubmit, isLoading, data } =
     useChat({
+      api: "/api/chat",
       initialMessages,
+      body: (messages: Message[]) => ({
+        messages,
+        mode: "personal", // ✅ זה מה שמפעיל את הסוכן האישי בצד שרת
+      }),
     });
 
   useEffect(() => {
@@ -23,7 +28,10 @@ export function Chat() {
   }, [messages]);
 
   return (
-    <div className="rounded-2xl border h-[75vh] flex flex-col justify-between">
+    <div
+      dir="rtl"
+      className="rounded-2xl border h-[75vh] flex flex-col justify-between"
+    >
       <div className="p-6 overflow-auto" ref={containerRef}>
         {messages.map(({ id, role, content }: Message, index) => (
           <ChatLine

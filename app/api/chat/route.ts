@@ -6,7 +6,7 @@ import { StringOutputParser } from "@langchain/core/output_parsers";
 import { ChatOpenAI } from "@langchain/openai";
 import { processUserMessage } from "@/lib/langchain";
 import { getPineconeClient } from "@/lib/pinecone-client";
-
+import { runPersonalAgent } from "@/lib/personal-agent"; // ✅ חדש
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
     // Parse and validate request
     const body = await req.json();
     const messages: Message[] = body.messages ?? [];
+    const mode = body.mode ?? "default"; // ✅ חדש: בודק אם מצב אישי מופעל
 
     if (!messages.length) {
       return NextResponse.json(
@@ -29,6 +30,31 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // ✅ סוכן אישי – מבלי לגעת בקוד הקיים
+    if (mode === "personal") {
+      const pc = await getPineconeClient();
+      const vectorStore = await getVectorStore(pc);
+      const profile = (await vectorStore.similaritySearch("תן את כל המידע", 20))
+        .map((doc) => doc.pageContent)
+        .join("\n\n");
+
+      const result = await runPersonalAgent({
+        prompt: currentQuestion,
+        profile,
+      });
+
+      // ✅ עוטפים את הטקסט ב־ReadableStream ידני
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(result);
+          controller.close();
+        },
+      });
+
+      return LangChainAdapter.toDataStreamResponse(stream);
+    }
+
     // Format conversation history
     const formattedPreviousMessages = messages
       .slice(0, -1)
