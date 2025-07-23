@@ -19,7 +19,7 @@ export function Chat() {
       api: "/api/chat",
       initialMessages,
       body: {
-        mode, // ✅ נשלח אוטומטית לצד ה־messages
+        mode, //  נשלח אוטומטית לצד ה־messages
       },
     });
 
