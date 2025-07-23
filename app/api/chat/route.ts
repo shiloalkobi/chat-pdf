@@ -7,6 +7,8 @@ import { ChatOpenAI } from "@langchain/openai";
 import { processUserMessage } from "@/lib/langchain";
 import { getPineconeClient } from "@/lib/pinecone-client";
 import { runPersonalAgent } from "@/lib/personal-agent"; // ✅ חדש
+import { saveConversation } from "@/lib/save-conversation"; // ✅ חדש
+
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
@@ -43,6 +45,9 @@ export async function POST(req: NextRequest) {
         prompt: currentQuestion,
         profile,
       });
+
+      // ✅ שומר ב-MongoDB
+      await saveConversation(messages, mode);
 
       // ✅ עוטפים את הטקסט ב־ReadableStream ידני
       const stream = new ReadableStream({
@@ -81,6 +86,10 @@ export async function POST(req: NextRequest) {
       vectorStore,
       model,
     });
+
+    // ✅ שומר גם במצב רגיל
+    await saveConversation(messages, mode);
+
     console.log("message answer =>", stream);
     // console.log("message inquiry =>", inquiry);
     // Convert the stream using the new adapter
