@@ -7,28 +7,75 @@ import { useChat, Message } from "ai/react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 // import { Spinner } from "./ui/spinner";
-import { useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { ChatLine } from "./chat-line";
 import { Loader2Icon } from "lucide-react";
 
 export function Chat() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [mode, setMode] = useState<"default" | "personal">("personal");
-  const { messages, input, handleInputChange, handleSubmit, isLoading, data } =
+  const [storedMessages, setStoredMessages] = useState<Message[] | null>(null);
+  const [isClientReady, setIsClientReady] = useState(false); // טוען הודעות מה-localStorage רק בצד הלקוח
+  // נטען רק בצד הלקוח
+  useEffect(() => {
+    try {
+      const itemStr = localStorage.getItem("chatMessages");
+      if (itemStr) {
+        const { messages, timestamp } = JSON.parse(itemStr);
+        const age = Date.now() - timestamp;
+        if (age < 1 * 60 * 1000) {
+          setStoredMessages(messages);
+        } else {
+          localStorage.removeItem("chatMessages");
+          setStoredMessages(initialMessages);
+        }
+      } else {
+        setStoredMessages(initialMessages);
+      }
+    } catch (err) {
+      console.error("שגיאה בטעינת localStorage:", err);
+      setStoredMessages(initialMessages);
+    }
+
+    setIsClientReady(true);
+  }, []);
+
+  // if (!isClientReady || storedMessages === null) {
+  //   return (
+  //     <div className="p-6 text-center text-sm text-gray-500">טוען שיחה...</div>
+  //   );
+  // }
+
+  const { messages, input, handleInputChange, handleSubmit, isLoading } =
     useChat({
       api: "/api/chat",
-      initialMessages,
-      body: {
-        mode, //  נשלח אוטומטית לצד ה־messages
-      },
+      initialMessages: storedMessages ?? [],
+      body: { mode },
     });
 
+  // גלילה לתחתית ברגע שיש הודעות
   useEffect(() => {
-    setTimeout(() => scrollToBottom(containerRef), 100);
+    scrollToBottom(containerRef);
   }, [messages]);
+
+  useEffect(() => {
+    if (!isClientReady || messages.length === 0) return;
+
+    localStorage.setItem(
+      "chatMessages",
+      JSON.stringify({ messages, timestamp: Date.now() })
+    );
+  }, [messages, isClientReady]);
+
+  if (!storedMessages) {
+    return (
+      <div className="p-6 text-center text-sm text-gray-500">טוען שיחה...</div>
+    );
+  }
 
   return (
     <div
+      suppressHydrationWarning
       dir="rtl"
       className="rounded-2xl border h-[75vh] flex flex-col justify-between"
     >
