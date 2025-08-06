@@ -1,14 +1,21 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { PromptTemplate } from "@langchain/core/prompts";
+import {
+  ChatPromptTemplate,
+  MessagesPlaceholder,
+  PromptTemplate,
+} from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
 import { StringOutputParser } from "@langchain/core/output_parsers";
+import { AIMessage, HumanMessage } from "@langchain/core/messages";
 
 export async function runPersonalAgent({
   prompt,
   profile,
+  messages,
 }: {
   prompt: string;
   profile: string;
+  messages: { role: string; content: string }[];
 }) {
   const systemMessage = `היי 🤗
 
@@ -28,21 +35,45 @@ ${profile}
 
 `;
 
-  const promptTemplate = PromptTemplate.fromTemplate(
-    `${systemMessage}\n\nשאלה: {prompt}\nתשובה:`
-  );
+  const chatPrompt = ChatPromptTemplate.fromMessages([
+    ["system", systemMessage],
+    new MessagesPlaceholder("history"),
+    ["human", "{input}"],
+  ]);
+  // const promptTemplate = PromptTemplate.fromTemplate(
+  //   `${systemMessage}\n\nשאלה: {prompt}\nתשובה:`
+  // );
 
-  const model = new ChatOpenAI({
-    modelName: "gpt-3.5-turbo",
-    temperature: 0.3,
-    streaming: false,
-  });
+  const formattedHistory = messages
+    .slice(0, -1)
+    .map((m) =>
+      m.role === "user" ? new HumanMessage(m.content) : new AIMessage(m.content)
+    );
+
+  // const model = new ChatOpenAI({
+  //   modelName: "gpt-3.5-turbo",
+  //   temperature: 0.3,
+  //   streaming: false,
+  // });
 
   const chain = RunnableSequence.from([
-    promptTemplate,
-    model,
+    chatPrompt,
+    new ChatOpenAI({
+      modelName: "gpt-3.5-turbo",
+      temperature: 0.3,
+      streaming: false,
+    }),
     new StringOutputParser(),
   ]);
 
-  return await chain.invoke({ prompt });
+  // const chain = RunnableSequence.from([
+  //   promptTemplate,
+  //   model,
+  //   new StringOutputParser(),
+  // ]);
+
+  return await chain.invoke({
+    input: prompt,
+    history: formattedHistory,
+  });
 }

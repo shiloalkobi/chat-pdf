@@ -8,6 +8,7 @@ import { processUserMessage } from "@/lib/langchain";
 import { getPineconeClient } from "@/lib/pinecone-client";
 import { runPersonalAgent } from "@/lib/personal-agent"; // ✅ חדש
 import { saveConversation } from "@/lib/save-conversation"; // ✅ חדש
+// import { runPersonalAgentWithMemory as runPersonalAgent } from "@/lib/personal-agent-with-memory";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 45;
@@ -44,6 +45,7 @@ export async function POST(req: NextRequest) {
       const result = await runPersonalAgent({
         prompt: currentQuestion,
         profile,
+        messages,
       });
 
       // ✅ שומר ב-MongoDB
